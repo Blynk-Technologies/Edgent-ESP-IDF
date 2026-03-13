@@ -1,0 +1,74 @@
+menu "Blynk.Edgent configuration"
+    menu "Application configuration"
+        config BLYNK_FIRMWARE_VERSION
+            string "Firmware Version"
+            default "0.0.1"
+            help
+                Application firmware version
+        config BLYNK_TEMPLATE_ID
+            string "Template ID"
+            default ""
+            help
+                Blynk Template ID is used to identify the device type and/or model.
+        config BLYNK_TEMPLATE_NAME
+            string "Template Name"
+            default ""
+            help
+                Blynk Template Name is displayed during provisioning.
+        config BLYNK_DEVICE_PREFIX
+            string "Vendor prefix [for white-labeling]"
+            default "Blynk"
+            help
+                The device prefix is displayed during provisioning.
+                This can only be used with white label Blynk apps.
+        config BLYNK_FIRMWARE_TYPE
+            string "Firmware Type"
+            default ""
+            help
+                This setting allows to decouple the firmware type from the Template ID.
+                Used for OTA purposes. If empty, defaults to Template ID.
+        config BLYNK_DEFAULT_SERVER
+            string "Default Blynk server"
+            default "blynk.cloud"
+            help
+                The default server to connect to.
+                During dynamic provisioning, the application typically overrides this setting.
+        config BLYNK_FIRMWARE_TYPE_SET
+            bool
+            default y if BLYNK_FIRMWARE_TYPE != ""
+    endmenu # "Application configuration"
+    choice BLYNK_DEBUG_LEVEL
+        bool "Debug output level"
+        default BLYNK_DEBUG_LEVEL_INFO
+        help
+            Choose the verbosity of debug log output for this component
+        config BLYNK_DEBUG_LEVEL_ERR
+            bool "Error"
+        config BLYNK_DEBUG_LEVEL_WARN
+            bool "Warning"
+        config BLYNK_DEBUG_LEVEL_INFO
+            bool "Info"
+        config BLYNK_DEBUG_LEVEL_DEBUG
+            bool "Debug"
+        config BLYNK_DEBUG_LEVEL_VERBOSE
+            bool "Verbose"
+    endchoice
+    config BLYNK_USE_ETHERNET
+        bool "Use Ethernet"
+        default n
+        help
+            Use Ethernet library (configure it in the menu "Example Ethernet Configuration")
+    config BLYNK_USE_CELLULAR
+        bool "Use Cellular"
+        default n
+        depends on BROKEN
+        help
+            Use in-house cellular library (currently not available)
+    config BLYNK_DEBUG_LEVEL
+        int
+        default 1 if BLYNK_DEBUG_LEVEL_ERR
+        default 2 if BLYNK_DEBUG_LEVEL_WARN
+        default 3 if BLYNK_DEBUG_LEVEL_INFO
+        default 4 if BLYNK_DEBUG_LEVEL_DEBUG
+        default 5 if BLYNK_DEBUG_LEVEL_VERBOSE
+endmenu # Blynk.Edgent configuration

@@ -1,0 +1,22 @@
+version: "0.9.0"
+description: "Blynk Edgent for ESP-IDF"
+url: "https://www.blynk.io"
+license: "MIT"
+dependencies:
+  idf:
+    version: ">=5.4,<=5.5.2"
+targets:
+  - esp32
+  - esp32s3
+  - esp32c3
+  - esp32c6
+tags:
+  - iot
+  - wifi
+  - networking
+  - mqtt
+  - provisioning
+  - ble
+  - ota
+  - cloud
+  - blynk

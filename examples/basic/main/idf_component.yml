@@ -1,0 +1,9 @@
+## IDF Component Manager Manifest File
+dependencies:
+  idf:
+    version: '>=5.1.0'
+  blynk_iot/edgent:
+    version: '*'
+    override_path: ../../../
+  espressif/button:
+    version: ^4.1.3

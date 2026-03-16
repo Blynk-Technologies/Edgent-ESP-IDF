@@ -62,11 +62,11 @@ void edgent_on_reboot_request(void) {
 }
 
 static void on_downlink_datastream_callback(const char* topic, int topic_len, const char* data, int data_len) {
-   ESP_LOGI(TAG, "Datastream received — topic: %.*s, data: %.*s", topic_len, topic, data_len, data);
+   ESP_LOGI(TAG, "Datastream received — topic: %s, data: %s", topic, data);
 }
 
 static void on_downlink_callback(const char* topic, int topic_len, const char* data, int data_len) {
-   ESP_LOGI(TAG, "Downlink received — topic: %.*s, data: %.*s", topic_len, topic, data_len, data);
+   ESP_LOGI(TAG, "Downlink received — topic: %s, data: %s", topic, data);
 }
 
 static void on_state_change(void) {

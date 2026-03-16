@@ -22,9 +22,9 @@ const char* blynk_get_template_name(void)
     return BLYNK_TEMPLATE_NAME;
 }
 
-const char* blynk_get_device_prefix(void)
+const char* blynk_get_vendor_prefix(void)
 {
-    return BLYNK_DEVICE_PREFIX;
+    return BLYNK_VENDOR_PREFIX;
 }
 
 const char* blynk_get_firmware_type(void)

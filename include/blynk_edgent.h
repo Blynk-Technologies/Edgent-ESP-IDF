@@ -11,26 +11,45 @@
 extern "C" {
 #endif
 
+/*
+ * Edgent API Overview
+ * -------------------
+ * - Datastream helpers follow: edgent_ds_publish_* naming.
+ * - Configuration is provided via `edgent_config_t` and passed to `edgent_init()`.
+ *
+ * MQTT topic conventions: https://docs.blynk.io/en/blynk.cloud-mqtt-api/device-mqtt-api
+ */
+
 #include "esp_event.h"
 
-typedef void (*edgent_ds_cb_t)(const char* topic, int topic_len, const char* data, int data_len);
-typedef void (*edgent_cb_t)(void);
+enum edgent_err_code {
+   EDGENT_OK = 0,
+   EDGENT_FAIL = -3000,
+   EDGENT_ERR_INVALID_ARG = -3001,
+   EDGENT_ERR_NO_MEM = -3002,
+};
+
 typedef int edgent_err;
 
-// Blynk Edgent operational states
+typedef void (*edgent_ds_cb_t)(const char* topic, int topic_len,
+                              const char* data, int data_len);
+typedef void (*edgent_cb_t)(void);
+
+/* =========================
+ * Edgent State Management
+ * ========================= */
+
 typedef enum {
-   EDGENT_STATE_UNKNOWN = -1, //Unknown state (unitialized)
-   EDGENT_STATE_IDLE, // No active operation
-   EDGENT_STATE_CONNECTING_NET, // Connecting to Wi-Fi / Ethernet / PPP
-   EDGENT_STATE_CONNECTING_CLOUD, // Connected to network, connecting to Blynk Cloud
-   EDGENT_STATE_CONNECTED, // Normal running mode (cloud connected)
-   EDGENT_STATE_WAIT_CONFIG, // Waiting for provisioning/config
-   EDGENT_STATE_RESET_CONFIG, // Resetting stored configuration
-   EDGENT_STATE_OTA_UPGRADE, // OTA update in progress
-   EDGENT_STATE_ERROR, // Error or fault detected
+   EDGENT_STATE_UNKNOWN = -1,   // Uninitialized
+   EDGENT_STATE_IDLE,           // Idle
+   EDGENT_STATE_CONNECTING_NET, // Connecting to network
+   EDGENT_STATE_CONNECTING_CLOUD,
+   EDGENT_STATE_CONNECTED,      // Fully operational
+   EDGENT_STATE_WAIT_CONFIG,    // Provisioning mode
+   EDGENT_STATE_OTA_UPGRADE,
+   EDGENT_STATE_ERROR,
 } edgent_state_t;
 
-// Payload for the STATE_CHANGED event
 typedef struct {
    edgent_state_t prev;
    edgent_state_t curr;
@@ -39,125 +58,163 @@ typedef struct {
 ESP_EVENT_DECLARE_BASE(EDGENT_EVENT_BASE);
 #define EDGENT_EVENT_STATE_CHANGED 1
 
-/**
- * @brief Initialize the Edgent system.
- *
- * This function prepares internal structures, configuration,
- * and resources required for the Edgent system to operate.
- *
- * @return edgent_err Returns 0 on success, or an error code on failure.
- */
-void edgent_init(void);
+/* =========================
+ * Configuration
+ * ========================= */
+
+typedef struct {
+   edgent_ds_cb_t downlink_ds_callback;
+   edgent_ds_cb_t downlink_callback;
+   edgent_cb_t    state_change_callback;
+   edgent_cb_t    config_change_callback;
+   edgent_cb_t    initial_connection_callback;
+   edgent_cb_t    reboot_request_callback;
+   uint32_t       config_timeout_seconds;
+   uint32_t       config_skip_limit;
+} edgent_config_t;
+
+/* =========================
+ * Lifecycle API
+ * ========================= */
 
 /**
- * @brief Start the Edgent system.
+ * @brief Initialize Edgent.
  *
- * This function begins Edgent operations, such as connecting to
- * the Сloud, and other runtime services.
- *
- * @return edgent_err Returns 0 on success, or an error code on failure.
+ * Must be called before any other API.
  */
-void edgent_start();
+void edgent_init(const edgent_config_t *config);
 
 /**
- * @brief Reset the Edgent configuration to factory defaults.
- *
- * Clears saved credentials, settings, or any persistent configuration,
- * and prepares the system for provisioning.
- *
+ * @brief Start Edgent runtime (network + cloud).
  */
-void edgent_reset_config(void);
+void edgent_start(void);
 
 /**
- * @brief Start Edgent configuration (factory reset mode).
- *
- * After calling this function, the device will enter provisioning mode,
- * allowing new configuration (e.g., Wi-Fi credentials or authentication token)
- * to be set up again.
+ * @brief Stop Edgent runtime.
  */
-void edgent_start_config(void);
+void edgent_stop(void);
 
 /**
- * @brief (Weak) Callback invoked when a reboot is requested by Edgent.
- *
- * This function can be overridden by user code to handle reboot requests
- * (e.g., from the cloud or internal triggers). Default implementation reboots device immediately.
+ * @brief Reset stored configuration (factory reset).
  */
-__attribute__((weak)) void edgent_on_reboot_request(void);
+void edgent_config_reset(void);
 
 /**
- * @brief Set a callback function for handling downlink/ds/DATASTREAM input events.
- *
- * This function registers a user-defined callback to handle interactions
- * with Blynk datastreams.
- *
- * @param cb User-defined callback function of type `edgent_ds_cb_t`.
+ * @brief Enter provisioning mode.
  */
-void edgent_set_downlink_datastream_callback(edgent_ds_cb_t cb);
+void edgent_config_start(void);
 
 /**
- * @brief Set a callback function for handling general downlink/# input events.
- *
- * This function registers a user-defined callback to handle interactions
- * with Blynk datastreams.
- *
- * @param cb User-defined callback function of type `edgent_ds_cb_t`.
+ * @brief Stop provisioning mode.
  */
-void edgent_set_downlink_callback(edgent_ds_cb_t cb);
+void edgent_config_stop(void);
 
 /**
- * @brief Publish arbitrary data to a specified topic.
- *
- * Sends raw data to the cloud via the specified topic, using the
- * desired QoS level.
- * 
- * For supported topics and format, refer to:
- * https://docs.blynk.io/en/blynk.cloud-mqtt-api/device-mqtt-api/datastreams
- *
- * @param topic Topic name to publish to.
- * @param data Pointer to the data buffer to publish.
- * @param len Length of the data in bytes.
- * @param qos Quality of Service level (0 or 1).
- * 
- * @return edgent_err Returns 0 on success, or an error code on failure.
+ * @brief Check if device is configured.
  */
-edgent_err edgent_publish(const char* topic, const char* data, int len, int qos);
+bool edgent_is_configured(void);
+
+/* =========================
+ * MQTT Publish API
+ * ========================= */
 
 /**
- * @brief Set a callback function to handle Edgent state change events.
+ * @brief Publish raw MQTT message.
  *
- * This function registers a user-defined callback that is invoked whenever
- * the Edgent connection state changes — for example, when transitioning
- * between network, cloud, or idle states.
- *
- * @param cb User-defined callback function of type `edgent_cb_t`.
+ * Low-level API used to send MQTT message as is
  */
-void edgent_set_on_state_change(edgent_cb_t cb);
+edgent_err edgent_mqtt_publish(const char* topic,
+                              const char* data,
+                              int len,
+                              int qos);
+
+/* =========================
+ * Datastream API
+ * ========================= */
 
 /**
- * @brief Set a callback function for the initial successful connection.
- *
- * This function registers a user-defined callback that is called once when
- * Edgent establishes its first successful connection to the cloud after boot
- * or configuration. It is typically used to perform initialization actions
- * that require cloud connectivity.
- *
- * @param cb User-defined callback function of type `edgent_cb_t`.
+ * @brief Publish string value to datastream.
  */
-void edgent_set_on_initial_connection(edgent_cb_t cb);
+edgent_err edgent_publish_ds_str(const char* ds, const char* data);
 
 /**
- * @brief Set a callback function for configuration change events.
- *
- * This function registers a user-defined callback that is triggered when
- * the device configuration is modified — for example, after provisioning,
- * token change, or updated settings received from the cloud.
- *
- * @param cb User-defined callback function of type `edgent_cb_t`.
+ * @brief Publish integer value to datastream.
  */
-void edgent_set_on_config_change(edgent_cb_t cb);
+edgent_err edgent_publish_ds_int(const char* ds, int64_t value);
 
-void edgent_init(void);
+/**
+ * @brief Publish floating-point value to datastream.
+ */
+edgent_err edgent_publish_ds_float(const char* ds,
+                                    double value,
+                                    uint8_t precision);
+
+/**
+ * @brief Request datastream value(s).
+ */
+edgent_err edgent_get_ds(const char* ds);
+
+/**
+ * @brief Request all datastreams value(s).
+ */
+edgent_err edgent_get_ds_all();
+
+/* =========================
+ * Device Info API
+ * ========================= */
+
+/**
+ * @brief Request metadata (comma-separated list).
+ */
+edgent_err edgent_get_metadata(const char* meta);
+
+/**
+ * @brief Set metadata value.
+ */
+edgent_err edgent_set_metadata(const char* meta, const char* value);
+
+/**
+ * @brief Request UTC time.
+ */
+edgent_err edgent_get_utc(void);
+
+/**
+ * @brief Request device location.
+ */
+edgent_err edgent_get_location(void);
+
+/* =========================
+ * Properties & Events
+ * ========================= */
+
+/**
+ * @brief Set or modify datastream property.
+ *
+ * @param ds Datastream name
+ * @param prop Property name
+ * @param value Property value
+ */
+edgent_err edgent_set_property(const char* ds,
+                           const char* prop,
+                           const char* value);
+
+/**
+ * @brief Clear datasteram property.
+ *
+ * @param ds Datastream name
+ * @param prop Property name
+ */
+edgent_err edgent_clear_property(const char* ds,
+                           const char* prop);
+
+/**
+ * @brief Send event to cloud.
+ *
+ * @param event Event name
+ * @param description Optional message (NULL = no payload)
+ */
+edgent_err edgent_log_event(const char* event,
+                            const char* description);
 
 #ifdef __cplusplus
 }

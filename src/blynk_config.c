@@ -1,7 +1,38 @@
+/*
+ * Copyright (c) 2025 Blynk Technologies Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <stddef.h>
 #include <stdbool.h>
 #include "sdkconfig.h"
-#include "blynk_config.h"
+#include "blynk_edgent.h"
+
+#define BLYNK_FIRMWARE_VERSION CONFIG_BLYNK_FIRMWARE_VERSION
+#define BLYNK_TEMPLATE_ID      CONFIG_BLYNK_TEMPLATE_ID
+#define BLYNK_TEMPLATE_NAME    CONFIG_BLYNK_TEMPLATE_NAME
+#define BLYNK_VENDOR_PREFIX    CONFIG_BLYNK_VENDOR_PREFIX
+#define BLYNK_DEFAULT_SERVER   CONFIG_BLYNK_DEFAULT_SERVER
+
+_Static_assert(sizeof(BLYNK_FIRMWARE_VERSION) > 1, "BLYNK_FIRMWARE_VERSION must not be empty!");
+_Static_assert(sizeof(BLYNK_TEMPLATE_ID) > 1, "BLYNK_TEMPLATE_ID must not be empty!");
+_Static_assert(sizeof(BLYNK_TEMPLATE_NAME) > 1, "BLYNK_TEMPLATE_NAME must not be empty!");
+_Static_assert(sizeof(BLYNK_VENDOR_PREFIX) > 1, "BLYNK_VENDOR_PREFIX must not be empty!");
+
+#if CONFIG_BLYNK_FIRMWARE_TYPE_SET
+#   define BLYNK_FIRMWARE_TYPE CONFIG_BLYNK_FIRMWARE_TYPE
+#else
+#   define BLYNK_FIRMWARE_TYPE BLYNK_TEMPLATE_ID
+#endif
+
+_Static_assert(CONFIG_BT_ENABLED == 1, "Bluetooth must be enabled: set BT_ENABLED=y in menuconfig");
+_Static_assert(CONFIG_BT_NIMBLE_ENABLED == 1, "NimBLE must be enabled: set BT_NIMBLE_ENABLED=y in menuconfig");
+_Static_assert(
+   CONFIG_ESP_SYSTEM_EVENT_TASK_STACK_SIZE >= 2560,
+   "ESP_SYSTEM_EVENT_TASK_STACK_SIZE should be >= 2560: set ESP_SYSTEM_EVENT_TASK_STACK_SIZE>=2560 in menuconfig");
+
+SemaphoreHandle_t edgent_api_mutex;
 
 /* --------------------------------------------------------------------------
  * String getters
@@ -77,10 +108,4 @@ void fwinfo_init() {
       BLYNK_PARAM_KV("build", __DATE__ " " __TIME__) // Firmware build date and time
       "\0";
    (void)firmwareTag;
-}
-
-// Small trick for glue weak implementations during linking
-void edgent_internal_init(void);
-void edgent_init(void){
-    edgent_internal_init();
 }

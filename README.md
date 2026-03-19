@@ -24,7 +24,7 @@ and take advantage of all its advanced features without the need for extensive c
 Supported targets:
 ```
 ✅ ESP32, ESP32-S3, ESP32-C2, ESP32-C3, ESP32-C5, ESP32-C6
-⏳ ESP32-S2 - *(soon)*
+⏳ ESP32-S2 - soon
 ❌ ESP32-P4, ESP32-H4
 ```
 
@@ -39,7 +39,7 @@ Supported targets:
 Configure the target chip, eg `idf.py set-target esp32`.
 
 Configure component using `idf.py menuconfig`:
-```
+```txt
 (Top) → Component config → Blynk.Edgent
 ```
 
@@ -62,18 +62,17 @@ The device should appear `online` once the above steps complete successfully.
 See the device log via `idf.py monitor`:
 
 ```log
-I (326) example: app_main() started
-I (326) gpio: GPIO[9]| InputEn: 1| OutputEn: 0| OpenDrain: 0| Pullup: 1| Pulldown: 0| Intr:0 
-I (326) button: IoT Button Version: 4.1.3
-I (346) nm_eth.c: Ethernet initialized with 0 port(s)
-I (346) edgent.c: Blynk.Edgent initialized (device: Blynk Blinking LED-N945)
-I (356) edgent.c: State transition: IDLE => CONNECTING_NET
-I (356) example: Received on_state_change
-I (1506) edgent.c: State transition: CONNECTING_NET => CONNECTING_CLOUD
-I (1506) example: Received on_state_change
-I (2626) edgent.c: State transition: CONNECTING_CLOUD => RUNNING
-I (2626) example: Received on_state_change
-I (2626) example: Received on_initial_connection
+I (771) edgent.c: Blynk.Edgent initialized (device: Blynk Demo-N1A9)
+I (771) edgent.c: State: IDLE => CONNECTING_NET
+I (771) example: State change event received
+I (851) nm_wifi.c: Connecting to SSID:wifi BSSID 2c:c8:1b:xx:xx:xx CH:11
+I (851) example: Awaiting Cloud connection...
+I (1931) edgent.c: State: CONNECTING_NET => CONNECTING_CLOUD
+I (1931) example: State change event received
+I (2981) edgent.c: State: CONNECTING_CLOUD => RUNNING
+I (2981) example: State change event received
+I (2981) example: Initial connection established
+I (2991) example: [main] Cloud connected event received! Continuing...
 ```
 
 </details>
@@ -95,11 +94,10 @@ The example application also handles the on-board button:
 idf.py add-dependency "blynk/edgent^1.0.0"
 ```
 
-If your project uses **Minimal Build**, consider disabling it, or add build dependencies explicitly:
+If your project uses [`MINIMAL_BUILD`](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/build-system.html#cmake-build-properties), consider disabling it, or add build dependencies explicitly:
 ```
 esp_event esp_netif esp_wifi esp_https_ota
-esp_partition efuse nvs_flash mqtt json bt
-esp_eth
+esp_partition efuse nvs_flash mqtt json bt esp_eth
 ```
 
 ## OTA configuration
@@ -107,7 +105,7 @@ esp_eth
 Minimum flash size requirement for OTA updates is `4MB`.
 
 You should select a dual-bank partition table, for example:
-```
+```txt
 (Top) → Partition Table → Partition Table → Two large size OTA partitions
 ```
 
@@ -128,6 +126,7 @@ To enable Ethernet:
 <!--
 - [Cookbook](_extra/Cookbook.md)
 -->
+
 - [Blynk.Edgent](https://docs.blynk.io/en/blynk.edgent/overview)
 - [Blynk IoT Apps][blynk-apps]
 - [Deploying Products With Dynamic AuthTokens](https://docs.blynk.io/en/commercial-use/deploying-products-with-dynamic-authtokens)

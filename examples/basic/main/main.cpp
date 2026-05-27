@@ -167,7 +167,7 @@ extern "C" void app_main(void) {
    // create parallel task
    xTaskCreate(other_task,
                "other_task",
-               2048,
+               4 * 1024,
                NULL,
                tskIDLE_PRIORITY + 1, // default normal priority
                NULL);

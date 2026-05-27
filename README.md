@@ -24,9 +24,13 @@ and take advantage of all its advanced features without the need for extensive c
 Supported targets:
 ```
 ✅ ESP32, ESP32-S3, ESP32-C2, ESP32-C3, ESP32-C5, ESP32-C6
-⏳ ESP32-S2 - soon
+⏳ ESP32-S2 - coming soon
 ❌ ESP32-P4, ESP32-H4
 ```
+
+> [!IMPORTANT]
+> Blynk.Edgent component is provided for specific ESP-IDF versions.  
+> See the [Release Notes](https://github.com/Blynk-Technologies/Edgent-ESP-IDF/releases) for compatibility details.
 
 ## Getting Started
 
@@ -34,11 +38,21 @@ Supported targets:
 - Install **Blynk IoT App** for [iOS][blynk-ios] or [Android][blynk-android]
 - Create a new Product Template. This will provide you with `Template ID` and `Template Name`.
 
-## 1. Install
+## 1. Build firmware
 
-Configure the target chip, eg `idf.py set-target esp32`.
+```sh
+idf.py create-project-from-example "blynk/edgent:basic"
+cd basic
 
-Configure component using `idf.py menuconfig`:
+# Configure the target chip
+idf.py set-target esp32
+
+# Configure Blynk.Edgent component
+idf.py menuconfig
+```
+
+In `menuconfig`, navigate to:
+
 ```txt
 (Top) → Component config → Blynk.Edgent
 ```
@@ -91,7 +105,7 @@ The example application also handles the on-board button:
 ## Adding to existing project
 
 ```sh
-idf.py add-dependency "blynk/edgent^1.0.0"
+idf.py add-dependency "blynk/edgent"
 ```
 
 If your project uses [`MINIMAL_BUILD`](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/build-system.html#cmake-build-properties), consider disabling it, or add build dependencies explicitly:

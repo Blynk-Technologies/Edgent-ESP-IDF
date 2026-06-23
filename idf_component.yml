@@ -1,4 +1,4 @@
-version: "1.0.2"
+version: "1.0.3"
 description: "Blynk Edgent for ESP-IDF"
 url: "https://www.blynk.io"
 license: "Apache-2.0"

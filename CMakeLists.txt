@@ -4,6 +4,7 @@ file(GLOB_RECURSE EDGENT_SOURCES src/*.c)
 set(EDGENT_CORE_LIB edgent_core_${IDF_TARGET}_${IDF_VER})
 set(PREBUILT_LIB_PATH ${COMPONENT_DIR}/lib/${EDGENT_CORE_LIB}.a)
 set(EDGENT_CORE_REQUIRES
+        idf::bootloader_support
         idf::esp_event
         idf::esp_netif
         idf::esp_wifi
@@ -19,6 +20,9 @@ set(EDGENT_CORE_REQUIRES
         idf::esp_driver_uart
         idf::esp_driver_gpio
         idf::esp_eth
+        idf::tcp_transport
+        idf::espcoredump
+        idf::http_parser
 )
 
 idf_component_register(

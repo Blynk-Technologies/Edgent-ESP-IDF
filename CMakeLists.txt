@@ -21,8 +21,11 @@ set(EDGENT_CORE_REQUIRES
         idf::esp_driver_gpio
         idf::esp_eth
         idf::tcp_transport
+        idf::spi_flash
         idf::espcoredump
         idf::http_parser
+        idf::joltwallet__littlefs
+        idf::app_update
 )
 
 idf_component_register(

@@ -1,4 +1,4 @@
-version: "1.0.3"
+version: "1.0.4"
 description: "Blynk Edgent for ESP-IDF"
 url: "https://www.blynk.io"
 license: "Apache-2.0"
@@ -11,6 +11,8 @@ dependencies:
     version: "^1.0.0"
   espressif/cjson:
     version: "^1.7.19~2"
+  joltwallet/littlefs:
+    version: "^1.22.3"
 targets:
   - esp32
   - esp32s3

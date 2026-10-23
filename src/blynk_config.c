@@ -6,8 +6,12 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <esp_console.h>
+#include <esp_log.h>
 #include "sdkconfig.h"
 #include "blynk_edgent.h"
+
+static const char* __attribute__((unused)) TAG = "blynk_config";
 
 #define BLYNK_FIRMWARE_VERSION CONFIG_BLYNK_FIRMWARE_VERSION
 #define BLYNK_TEMPLATE_ID      CONFIG_BLYNK_TEMPLATE_ID
@@ -38,64 +42,55 @@ SemaphoreHandle_t edgent_api_mutex;
  * String getters
  * -------------------------------------------------------------------------- */
 
-const char* blynk_get_firmware_version(void)
-{
-    return BLYNK_FIRMWARE_VERSION;
+const char* blynk_get_firmware_version(void) {
+   return BLYNK_FIRMWARE_VERSION;
 }
 
-const char* blynk_get_template_id(void)
-{
-    return BLYNK_TEMPLATE_ID;
+const char* blynk_get_template_id(void) {
+   return BLYNK_TEMPLATE_ID;
 }
 
-const char* blynk_get_template_name(void)
-{
-    return BLYNK_TEMPLATE_NAME;
+const char* blynk_get_template_name(void) {
+   return BLYNK_TEMPLATE_NAME;
 }
 
-const char* blynk_get_vendor_prefix(void)
-{
-    return BLYNK_VENDOR_PREFIX;
+const char* blynk_get_vendor_prefix(void) {
+   return BLYNK_VENDOR_PREFIX;
 }
 
-const char* blynk_get_firmware_type(void)
-{
-    return BLYNK_FIRMWARE_TYPE;
+const char* blynk_get_firmware_type(void) {
+   return BLYNK_FIRMWARE_TYPE;
 }
 
-const char* blynk_get_default_server(void)
-{
-    return BLYNK_DEFAULT_SERVER;
+const char* blynk_get_default_server(void) {
+   return BLYNK_DEFAULT_SERVER;
 }
 
 /* --------------------------------------------------------------------------
  * Debug level
  * -------------------------------------------------------------------------- */
 
-int blynk_get_debug_level(void)
-{
-    return CONFIG_BLYNK_DEBUG_LEVEL;
+int blynk_get_debug_level(void) {
+   return CONFIG_BLYNK_DEBUG_LEVEL;
 }
 
 /* --------------------------------------------------------------------------
  * Feature flags
  * -------------------------------------------------------------------------- */
 
-bool blynk_use_ethernet(void)
-{
+bool blynk_use_ethernet(void) {
 #if CONFIG_BLYNK_USE_ETHERNET
-    return true;
+   return true;
 #else
-    return false;
+   return false;
 #endif
 }
 
-bool blynk_use_cellular(void)
-{
+bool blynk_use_cellular(void) {
 #if CONFIG_BLYNK_USE_CELLULAR
-    return true;
+   return true;
 #else
-    return false;
+   return false;
 #endif
 }
 
@@ -108,4 +103,26 @@ void fwinfo_init() {
       BLYNK_PARAM_KV("build", __DATE__ " " __TIME__) // Firmware build date and time
       "\0";
    (void)firmwareTag;
+}
+
+esp_err_t edgent_console_new_repl(esp_console_repl_t** ret_repl) {
+   esp_console_repl_config_t __attribute__((unused)) repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
+   repl_config.prompt = ">";
+   repl_config.max_cmdline_length = 256;
+
+   esp_err_t err = ESP_ERR_NOT_SUPPORTED;
+#if CONFIG_ESP_CONSOLE_UART_DEFAULT || CONFIG_ESP_CONSOLE_UART_CUSTOM
+   esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
+   err = esp_console_new_repl_uart(&hw_config, &repl_config, ret_repl);
+#elif CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+   esp_console_dev_usb_serial_jtag_config_t hw_config = ESP_CONSOLE_DEV_USB_SERIAL_JTAG_CONFIG_DEFAULT();
+   err = esp_console_new_repl_usb_serial_jtag(&hw_config, &repl_config, ret_repl);
+#elif CONFIG_ESP_CONSOLE_USB_CDC
+   esp_console_dev_usb_cdc_config_t hw_config = ESP_CONSOLE_DEV_CDC_CONFIG_DEFAULT();
+   err = esp_console_new_repl_usb_cdc(&hw_config, &repl_config, ret_repl);
+#else
+   ESP_LOGW(TAG,
+            "ESP-IDF console REPL is disabled in this build; remote console commands will still work via datastreams");
+#endif
+   return err;
 }

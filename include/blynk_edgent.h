@@ -56,7 +56,9 @@ typedef struct {
 } edgent_state_evt_t;
 
 ESP_EVENT_DECLARE_BASE(EDGENT_EVENT_BASE);
-#define EDGENT_EVENT_STATE_CHANGED 1
+#define EDGENT_EVENT_STATE_CHANGED      1
+#define EDGENT_EVENT_FACTORY_MODE       2
+#define EDGENT_EVENT_FACTORY_MODE_START 3
 
 /* =========================
  * Configuration
@@ -215,6 +217,68 @@ edgent_err edgent_clear_property(const char* ds,
  */
 edgent_err edgent_log_event(const char* event,
                             const char* description);
+
+/* =========================
+ * Utility API
+ * ========================= */
+
+/**
+ * @brief Fills output buffer with device suffix string
+ *
+ * @param out_buf Output buffer
+ * @param out_buf_size Output buffer size
+ *
+ * @return Number of characters that would have been written, excluding
+ *         the null terminator.
+ */
+int edgent_utils_get_device_suffix(char* out_buf, size_t out_buf_size);
+
+/**
+ * @brief Fills output buffer with full device name
+ *
+ * @param with_prefix Whether to include the vendor prefix
+ * @param out_buf Output buffer
+ * @param out_buf_size Output buffer size
+ *
+ * @return Number of characters that would have been written, excluding
+ *         the null terminator.
+ */
+int edgent_utils_get_device_name(bool with_prefix, char* out_buf, size_t out_buf_size);
+
+/**
+ * @brief Returns the device unique identifier (UID).
+ *
+ * @return Null-terminated device UID string.
+ */
+const char* edgent_system_get_device_uid(void);
+
+/* =========================
+ * Console API
+ * ========================= */
+
+/**
+ * @brief Sets the datastream used for console output.
+ *
+ * @param ds Datastream name.
+ */
+void edgent_console_set_datastream(const char* ds);
+
+/**
+ * @brief Register a custom console command handler.
+ */
+typedef int (*edgent_console_command_handler_t)(int argc, char** argv);
+void edgent_console_register_command(const char* name, const char* help,
+                                    edgent_console_command_handler_t handler);
+
+/**
+ * @brief Output console command text.
+ */
+void edgent_console_emit(const char* text);
+
+/** 
+ * @brief Report factory mode test result via BLE provisioning channel.
+ */
+void edgent_factory_mode_report(const char* status);
 
 #ifdef __cplusplus
 }
